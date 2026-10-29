@@ -1,0 +1,6 @@
+{
+  "name": "Sistema de Pedido de Férias - Portal do Colaborador e Gestão",
+  "description": "Sistema completo de pedido e gerenciamento de férias de funcionários com perfis de Funcionário, Gerente e RH, controle de saldo, validação de regras CLT e calendário integrado.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

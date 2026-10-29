@@ -1,0 +1,94 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Dados do perfil do usuário e funcionário no sistema de férias",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "ID do usuário no Firebase Auth" },
+        "name": { "type": "string", "description": "Nome completo do funcionário", "maxLength": 100 },
+        "email": { "type": "string", "description": "E-mail corporativo", "maxLength": 120 },
+        "role": { "type": "string", "description": "Papel no sistema", "enum": ["employee", "manager", "hr"] },
+        "department": { "type": "string", "description": "Departamento/Equipe", "maxLength": 60 },
+        "jobTitle": { "type": "string", "description": "Cargo do funcionário", "maxLength": 60 },
+        "managerId": { "type": "string", "description": "UID do gerente responsável", "maxLength": 128 },
+        "hireDate": { "type": "string", "description": "Data de admissão (YYYY-MM-DD)" },
+        "totalVacationDays": { "type": "number", "description": "Total de dias adquiridos (padrão 30)" },
+        "usedVacationDays": { "type": "number", "description": "Dias de férias já gozados" },
+        "soldVacationDays": { "type": "number", "description": "Dias vendidos em abono pecuniário" },
+        "remainingVacationDays": { "type": "number", "description": "Saldo restante de dias disponíveis" },
+        "periodsUsed": { "type": "number", "description": "Quantidade de períodos já usufruídos (máx 3)" },
+        "acquisitionPeriodStart": { "type": "string", "description": "Início do período aquisitivo (YYYY-MM-DD)" },
+        "acquisitionPeriodEnd": { "type": "string", "description": "Fim do período aquisitivo (YYYY-MM-DD)" },
+        "updatedAt": { "type": "string", "description": "Data de atualização" }
+      },
+      "required": ["uid", "name", "email", "role", "department", "remainingVacationDays"]
+    },
+    "VacationRequest": {
+      "title": "VacationRequest",
+      "description": "Pedido de férias submetido pelo funcionário",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "ID único do pedido", "maxLength": 128 },
+        "employeeId": { "type": "string", "description": "UID do funcionário solicitante", "maxLength": 128 },
+        "employeeName": { "type": "string", "description": "Nome do funcionário", "maxLength": 100 },
+        "employeeEmail": { "type": "string", "description": "Email do funcionário", "maxLength": 120 },
+        "department": { "type": "string", "description": "Departamento", "maxLength": 60 },
+        "managerId": { "type": "string", "description": "UID do gerente responsável", "maxLength": 128 },
+        "startDate": { "type": "string", "description": "Data de início das férias (YYYY-MM-DD)" },
+        "endDate": { "type": "string", "description": "Data de término das férias (YYYY-MM-DD)" },
+        "durationDays": { "type": "number", "description": "Quantidade de dias de férias a usufruir" },
+        "sellDays": { "type": "boolean", "description": "Se vendeu 1/3 das férias (abono pecuniário)" },
+        "soldDaysCount": { "type": "number", "description": "Dias convertidos em abono pecuniário (geralmente 10)" },
+        "periodNumber": { "type": "number", "description": "Número do período solicitado (1, 2 ou 3)" },
+        "status": {
+          "type": "string",
+          "description": "Status do pedido",
+          "enum": ["pending", "approved", "rejected", "registered", "cancelled"]
+        },
+        "rejectionReason": { "type": "string", "description": "Motivo da recusa pelo gerente", "maxLength": 500 },
+        "reviewedBy": { "type": "string", "description": "UID de quem revisou o pedido" },
+        "reviewedByName": { "type": "string", "description": "Nome de quem revisou" },
+        "reviewedAt": { "type": "string", "description": "Data da revisão" },
+        "registeredBy": { "type": "string", "description": "UID do RH que registrou" },
+        "registeredByName": { "type": "string", "description": "Nome do operador do RH" },
+        "registeredAt": { "type": "string", "description": "Data do registro formal pelo RH" },
+        "protocolNumber": { "type": "string", "description": "Número do protocolo gerado" },
+        "createdAt": { "type": "string", "description": "Data da solicitação" }
+      },
+      "required": ["id", "employeeId", "employeeName", "department", "startDate", "endDate", "durationDays", "status", "createdAt"]
+    },
+    "VacationLog": {
+      "title": "VacationLog",
+      "description": "Histórico e registro formal de movimentações de férias pelo RH",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Identificador do registro" },
+        "requestId": { "type": "string", "description": "ID do pedido associado" },
+        "employeeId": { "type": "string", "description": "UID do funcionário" },
+        "employeeName": { "type": "string", "description": "Nome do funcionário" },
+        "action": { "type": "string", "description": "Ação executada (SOLICITADO, APROVADO, RECUSADO, REGISTRADO, CANCELADO)" },
+        "actorId": { "type": "string", "description": "UID de quem executou a ação" },
+        "actorName": { "type": "string", "description": "Nome de quem executou" },
+        "actorRole": { "type": "string", "description": "Papel de quem executou" },
+        "details": { "type": "string", "description": "Detalhes complementares da ação" },
+        "timestamp": { "type": "string", "description": "Data e hora do evento" }
+      },
+      "required": ["id", "employeeId", "action", "timestamp"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Perfis de funcionários, gerentes e RH"
+    },
+    "/vacation_requests/{requestId}": {
+      "schema": { "$ref": "#/entities/VacationRequest" },
+      "description": "Solicitações de férias e acompanhamento de status"
+    },
+    "/vacation_logs/{logId}": {
+      "schema": { "$ref": "#/entities/VacationLog" },
+      "description": "Histórico formal de auditoria e registros de férias do RH"
+    }
+  }
+}

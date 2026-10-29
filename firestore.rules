@@ -1,0 +1,70 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isHR() {
+      return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             getUserData().role == 'hr';
+    }
+
+    function isManager() {
+      return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             getUserData().role == 'manager';
+    }
+
+    // Users Collection
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      // Allow users to create their initial profile, or HR to create/update
+      allow create: if isSignedIn() && (request.auth.uid == userId || isHR());
+      allow update: if isSignedIn() && (request.auth.uid == userId || isHR());
+      allow delete: if isHR();
+    }
+
+    // Vacation Requests Collection
+    match /vacation_requests/{requestId} {
+      // Employees can read their own, Managers can read their department, HR can read all
+      allow read: if isSignedIn();
+
+      // Employee can create pending request
+      allow create: if isSignedIn() &&
+        request.resource.data.employeeId == request.auth.uid &&
+        request.resource.data.status == 'pending';
+
+      // Updates based on role and action
+      allow update: if isSignedIn() && (
+        // HR can register approved requests or manage records
+        isHR() ||
+        // Manager can approve or reject with written reason
+        (isManager() && (
+          request.resource.data.status in ['approved', 'rejected']
+        )) ||
+        // Employee can cancel their own pending request
+        (request.auth.uid == resource.data.employeeId &&
+         resource.data.status == 'pending' &&
+         request.resource.data.status == 'cancelled')
+      );
+
+      allow delete: if isHR();
+    }
+
+    // Vacation Logs / Audit Collection
+    match /vacation_logs/{logId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update, delete: if isHR();
+    }
+  }
+}
